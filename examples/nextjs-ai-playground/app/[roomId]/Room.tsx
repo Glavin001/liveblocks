@@ -24,7 +24,7 @@ export function Room({ children, roomId }: { children: ReactNode; roomId: string
         components: new LiveMap(),
         componentOrder: new LiveList([]),
         whiteboardData: new LiveMap(),
-        todos: new LiveMap(),
+        dataStores: new LiveMap(),
       }}
     >
       <ClientSideSuspense fallback={<Loading />}>

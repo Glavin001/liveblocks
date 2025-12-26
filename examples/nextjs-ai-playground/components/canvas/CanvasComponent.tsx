@@ -134,8 +134,8 @@ export function CanvasComponent({ id, component }: Props) {
         {component.type === "video" && (
           <VideoBlock componentId={id} url={component.videoUrl} />
         )}
-        {component.type === "todo" && <TodoListBlock componentId={id} />}
-        {component.type === "calendar" && <CalendarBlock componentId={id} />}
+        {component.type === "todo" && <TodoListBlock componentId={id} dataId={component.dataId} />}
+        {component.type === "calendar" && <CalendarBlock componentId={id} dataId={component.dataId} />}
       </div>
 
       {/* Resize Handle - bottom right */}

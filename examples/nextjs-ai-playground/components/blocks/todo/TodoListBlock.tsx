@@ -5,13 +5,21 @@ import { LiveObject } from "@liveblocks/client";
 import { TodoItem } from "../../../liveblocks.config";
 import { nanoid } from "nanoid";
 import { useState } from "react";
-import { Trash2, Plus, Check } from "lucide-react";
+import { Trash2, Plus, Check, Link } from "lucide-react";
 import { cn } from "../../../lib/utils";
 
-export function TodoListBlock({ componentId }: { componentId: string }) {
-  const todos = useStorage((root) => root.todos);
+export function TodoListBlock({ componentId, dataId }: { componentId: string, dataId?: string }) {
+  const dataStores = useStorage((root) => root.dataStores);
+  
+  // Get the specific store if dataId is valid
+  const taskStore = dataId ? dataStores.get(dataId) : null;
+  const items = taskStore ? taskStore.items : null;
 
   const addTodo = useMutation(({ storage }, text: string) => {
+    if (!dataId) return;
+    const store = storage.get("dataStores").get(dataId);
+    if (!store) return;
+
     const id = nanoid();
     // Default to start of today
     const today = new Date();
@@ -24,33 +32,93 @@ export function TodoListBlock({ componentId }: { componentId: string }) {
       date: today.getTime(),
       color: "#3b82f6", // default blue
     });
-    storage.get("todos").set(id, todo);
-  }, []);
+    store.get("items").set(id, todo);
+  }, [dataId]);
 
   const toggleTodo = useMutation(({ storage }, id: string) => {
-    const todo = storage.get("todos").get(id);
+    if (!dataId) return;
+    const store = storage.get("dataStores").get(dataId);
+    if (!store) return;
+    
+    const todo = store.get("items").get(id);
     if (todo) {
       todo.update({ completed: !todo.get("completed") });
     }
-  }, []);
+  }, [dataId]);
 
   const deleteTodo = useMutation(({ storage }, id: string) => {
-    storage.get("todos").delete(id);
-  }, []);
+    if (!dataId) return;
+    const store = storage.get("dataStores").get(dataId);
+    if (store) {
+        store.get("items").delete(id);
+    }
+  }, [dataId]);
   
   const updateTitle = useMutation(({ storage }, id: string, newTitle: string) => {
-      const todo = storage.get("todos").get(id);
-      if (todo) {
-          todo.update({ title: newTitle });
-      }
-  }, []);
+    if (!dataId) return;
+    const store = storage.get("dataStores").get(dataId);
+    if (!store) return;
+
+    const todo = store.get("items").get(id);
+    if (todo) {
+        todo.update({ title: newTitle });
+    }
+  }, [dataId]);
+
+  // Handle switching data source
+  const switchDataSource = useMutation(({ storage }, newDataId: string) => {
+    const component = storage.get("components").get(componentId);
+    if (component) {
+        component.update({ dataId: newDataId });
+    }
+  }, [componentId]);
 
   const [newItemText, setNewItemText] = useState("");
+  const [showDataSourceSelector, setShowDataSourceSelector] = useState(false);
 
-  const sortedTodos = Array.from(todos?.values() ?? []).sort((a, b) => b.date - a.date);
+  const sortedTodos = Array.from(items?.values() ?? []).sort((a, b) => b.date - a.date);
+
+  if (!dataId || !taskStore) {
+      return (
+          <div className="flex flex-col h-full bg-white p-4 items-center justify-center text-center">
+             <p className="text-gray-400 text-sm mb-4">No data source connected.</p>
+             <DataSourceSelector 
+               currentDataId={dataId} 
+               dataStores={dataStores} 
+               onSelect={switchDataSource}
+            />
+          </div>
+      );
+  }
 
   return (
     <div className="flex flex-col h-full bg-white p-4 overflow-hidden relative" onPointerDown={(e) => e.stopPropagation()}>
+      <div className="flex justify-between items-center mb-4">
+          <div className="text-sm font-bold text-gray-700 truncate flex-1">
+              {taskStore.name}
+          </div>
+          <button 
+            className="p-1 hover:bg-gray-100 rounded text-gray-400"
+            onClick={() => setShowDataSourceSelector(!showDataSourceSelector)}
+            title="Switch Data Source"
+          >
+              <Link size={14} />
+          </button>
+      </div>
+      
+      {showDataSourceSelector && (
+          <div className="mb-4 p-2 bg-gray-50 rounded border border-gray-100">
+             <DataSourceSelector 
+               currentDataId={dataId} 
+               dataStores={dataStores} 
+               onSelect={(id) => {
+                   switchDataSource(id);
+                   setShowDataSourceSelector(false);
+               }}
+            />
+          </div>
+      )}
+
       <div className="flex gap-2 mb-4">
         <input
           className="flex-1 border rounded px-2 py-1 text-sm outline-none focus:ring-2 focus:ring-blue-500"
@@ -116,4 +184,32 @@ export function TodoListBlock({ componentId }: { componentId: string }) {
       </div>
     </div>
   );
+}
+
+function DataSourceSelector({ currentDataId, dataStores, onSelect }: { 
+    currentDataId?: string, 
+    dataStores: any, // type inference is tricky here with LiveMap
+    onSelect: (id: string) => void 
+}) {
+    const stores = Array.from(dataStores.entries()) as [string, any][];
+    
+    return (
+        <div className="space-y-1">
+            <div className="text-xs font-semibold text-gray-500 uppercase">Select Data Source</div>
+            {stores.map(([id, store]) => (
+                <button
+                  key={id}
+                  onClick={() => onSelect(id)}
+                  className={cn(
+                      "w-full text-left px-2 py-1 text-sm rounded hover:bg-blue-50 transition-colors flex items-center gap-2",
+                      currentDataId === id ? "bg-blue-50 text-blue-600 font-medium" : "text-gray-600"
+                  )}
+                >
+                    <div className={cn("w-2 h-2 rounded-full", currentDataId === id ? "bg-blue-500" : "bg-gray-300")} />
+                    {store.name}
+                </button>
+            ))}
+            {stores.length === 0 && <div className="text-xs text-gray-400 italic">No data sources available</div>}
+        </div>
+    );
 }

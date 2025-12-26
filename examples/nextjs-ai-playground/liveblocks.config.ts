@@ -12,6 +12,13 @@ export type CanvasComponent = {
   height: number;
   title: string;
   videoUrl?: string; // Only for video type
+  dataId?: string; // ID of the data store this component visualizes (for todo/calendar)
+};
+
+export type TaskStore = {
+    id: string;
+    name: string;
+    items: LiveMap<string, LiveObject<TodoItem>>;
 };
 
 export type TodoItem = {
@@ -95,8 +102,8 @@ declare global {
       // Document data is handled by Yjs via the `field` option
       // Each document uses field: `doc-${componentId}` in useLiveblocksExtension
       
-      // Shared Todo items
-      todos: LiveMap<string, LiveObject<TodoItem>>;
+      // Shared Data Stores (e.g. Task Lists)
+      dataStores: LiveMap<string, LiveObject<TaskStore>>;
     };
 
     // Custom user info set when authenticating with a secret key
