@@ -3,10 +3,10 @@
 import { useMutation } from "@liveblocks/react/suspense";
 import { LiveObject } from "@liveblocks/client";
 import { nanoid } from "nanoid";
-import { Square, Type, Video, Plus } from "lucide-react";
+import { Square, Type, Video, Plus, ListTodo, Calendar } from "lucide-react";
 
 export function AddComponentToolbar() {
-  const addComponent = useMutation(({ storage }, type: "whiteboard" | "document" | "video") => {
+  const addComponent = useMutation(({ storage }, type: "whiteboard" | "document" | "video" | "todo" | "calendar") => {
     const id = nanoid();
     const component = new LiveObject({
       id,
@@ -14,7 +14,7 @@ export function AddComponentToolbar() {
       title: `New ${type.charAt(0).toUpperCase() + type.slice(1)}`,
       x: 100 + Math.random() * 50,
       y: 100 + Math.random() * 50,
-      width: type === "video" ? 480 : 400,
+      width: (type === "video" || type === "calendar") ? 480 : 400,
       height: type === "video" ? 320 : 400,
       videoUrl: type === "video" ? "https://www.youtube.com/watch?v=dQw4w9WgXcQ" : undefined,
     });
@@ -41,6 +41,16 @@ export function AddComponentToolbar() {
         onClick={() => addComponent("video")} 
         icon={<Video size={18} />} 
         label="Video" 
+      />
+      <ToolbarButton 
+        onClick={() => addComponent("todo")} 
+        icon={<ListTodo size={18} />} 
+        label="Todo List" 
+      />
+      <ToolbarButton 
+        onClick={() => addComponent("calendar")} 
+        icon={<Calendar size={18} />} 
+        label="Calendar" 
       />
     </div>
   );

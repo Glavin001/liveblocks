@@ -5,13 +5,21 @@ import { LiveList, LiveMap, LiveObject } from "@liveblocks/client";
  */
 export type CanvasComponent = {
   id: string;
-  type: "whiteboard" | "document" | "video";
+  type: "whiteboard" | "document" | "video" | "todo" | "calendar";
   x: number;
   y: number;
   width: number;
   height: number;
   title: string;
   videoUrl?: string; // Only for video type
+};
+
+export type TodoItem = {
+  id: string;
+  title: string;
+  date: number; // Single date for simplicity, or start/end
+  completed: boolean;
+  color: string;
 };
 
 export type Color = {
@@ -86,6 +94,9 @@ declare global {
 
       // Document data is handled by Yjs via the `field` option
       // Each document uses field: `doc-${componentId}` in useLiveblocksExtension
+      
+      // Shared Todo items
+      todos: LiveMap<string, LiveObject<TodoItem>>;
     };
 
     // Custom user info set when authenticating with a secret key

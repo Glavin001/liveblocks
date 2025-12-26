@@ -11,6 +11,8 @@ import { cn } from "../../lib/utils";
 import { WhiteboardBlock } from "../blocks/whiteboard/WhiteboardBlock";
 import { DocumentBlock } from "../blocks/document/DocumentBlock";
 import { VideoBlock } from "../blocks/video/VideoBlock";
+import { TodoListBlock } from "../blocks/todo/TodoListBlock";
+import { CalendarBlock } from "../blocks/calendar/CalendarBlock";
 
 import { Trash2, Maximize2 } from "lucide-react";
 
@@ -132,6 +134,8 @@ export function CanvasComponent({ id, component }: Props) {
         {component.type === "video" && (
           <VideoBlock componentId={id} url={component.videoUrl} />
         )}
+        {component.type === "todo" && <TodoListBlock componentId={id} />}
+        {component.type === "calendar" && <CalendarBlock componentId={id} />}
       </div>
 
       {/* Resize Handle - bottom right */}
